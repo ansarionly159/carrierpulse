@@ -70,11 +70,22 @@ function serveStatic(req, res, pathname) {
     res.end(data);
   });
 }
-
+function loadCodes() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'codes.json'), 'utf-8'));
+  } catch {
+    return [];
+  }
+} 
 const server = http.createServer((req, res) => {
   const parsed = url.parse(req.url, true);
   const { pathname, query } = parsed;
-
+if (pathname === '/api/redeem') {
+    const codes = loadCodes();
+    const entered = (query.code || '').trim().toUpperCase();
+    const valid = codes.map(c => c.toUpperCase()).includes(entered);
+    return send(res, 200, { valid });
+  } 
   if (pathname === '/api/carriers') {
     const rows = filterCarriers(query);
     const tiered = applyTier(rows, query.tier === 'paid' ? 'paid' : 'free');
