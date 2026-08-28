@@ -1,0 +1,12 @@
+[
+  { "company_name": "Prairie Line Logistics LLC", "phone": "701-555-0142", "dot_number": "4021958", "mc_number": "1587223", "city": "Fargo", "state": "ND", "status": "Active", "equipment_count": 3, "registration_date": "2026-08-20" },
+  { "company_name": "Redhawk Freight Co", "phone": "512-555-0198", "dot_number": "4021960", "mc_number": "1587230", "city": "Austin", "state": "TX", "status": "Pending", "equipment_count": 1, "registration_date": "2026-08-20" },
+  { "company_name": "Blue Ridge Carriers Inc", "phone": "704-555-0111", "dot_number": "4021965", "mc_number": "1587244", "city": "Charlotte", "state": "NC", "status": "Active", "equipment_count": 5, "registration_date": "2026-08-20" },
+  { "company_name": "Sunbelt Transport Group", "phone": "602-555-0177", "dot_number": "4021970", "mc_number": "1587251", "city": "Phoenix", "state": "AZ", "status": "Active", "equipment_count": 2, "registration_date": "2026-08-20" },
+  { "company_name": "Northgate Hauling LLC", "phone": "313-555-0133", "dot_number": "4021974", "mc_number": "1587260", "city": "Detroit", "state": "MI", "status": "Pending", "equipment_count": 1, "registration_date": "2026-08-20" },
+  { "company_name": "Coastal Express Trucking", "phone": "757-555-0166", "dot_number": "4021980", "mc_number": "1587268", "city": "Norfolk", "state": "VA", "status": "Active", "equipment_count": 4, "registration_date": "2026-08-20" },
+  { "company_name": "Timberline Freight Solutions", "phone": "406-555-0121", "dot_number": "4021988", "mc_number": "1587275", "city": "Billings", "state": "MT", "status": "Active", "equipment_count": 2, "registration_date": "2026-08-19" },
+  { "company_name": "Gulf Coast Movers LLC", "phone": "228-555-0155", "dot_number": "4021991", "mc_number": "1587281", "city": "Biloxi", "state": "MS", "status": "Pending", "equipment_count": 1, "registration_date": "2026-08-19" },
+  { "company_name": "Great Lakes Bulk Transport", "phone": "216-555-0144", "dot_number": "4021995", "mc_number": "1587290", "city": "Cleveland", "state": "OH", "status": "Active", "equipment_count": 6, "registration_date": "2026-08-19" },
+  { "company_name": "Desert Sky Carriers", "phone": "505-555-0188", "dot_number": "4022001", "mc_number": "1587299", "city": "Albuquerque", "state": "NM", "status": "Active", "equipment_count": 3, "registration_date": "2026-08-19" }
+]
