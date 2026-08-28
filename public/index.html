@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarrierPulse — New Carrier Manifest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">CP</span>
+    <span class="brand-name">CarrierPulse</span>
+  </div>
+  <div class="tier-switch" title="Demo only — real apps use login + payment status">
+    <span>Demo view:</span>
+    <button id="freeBtn" class="tier-btn active">Free</button>
+    <button id="paidBtn" class="tier-btn">Premium</button>
+  </div>
+</header>
+
+<section class="manifest-strip">
+  <div class="manifest-strip-inner">
+    <span class="dot">●</span> MANIFEST LIVE — new FMCSA registrations refresh daily at 06:00 ET
+  </div>
+</section>
+
+<main>
+  <div class="hero">
+    <h1>Every newly registered carrier.<br>Before your competitors see it.</h1>
+    <p>Pulled straight from FMCSA SAFER records. Search a single day or a date range, then export the full manifest.</p>
+  </div>
+
+  <form id="searchForm" class="search-panel">
+    <div class="mode-toggle">
+      <label><input type="radio" name="mode" value="single" checked> Single date</label>
+      <label><input type="radio" name="mode" value="range"> Date range</label>
+    </div>
+    <div class="fields">
+      <div class="field" id="singleField">
+        <label for="date">Date</label>
+        <input type="date" id="date" value="2026-08-20">
+      </div>
+      <div class="field hidden" id="startField">
+        <label for="start">From</label>
+        <input type="date" id="start" value="2026-08-19">
+      </div>
+      <div class="field hidden" id="endField">
+        <label for="end">To</label>
+        <input type="date" id="end" value="2026-08-20">
+      </div>
+      <button type="submit" class="search-btn">Search manifest</button>
+    </div>
+  </form>
+
+  <div class="results-header">
+    <h2 id="resultCount">—</h2>
+    <button id="exportBtn" class="export-btn">Export CSV / Excel</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Phone</th>
+          <th>DOT #</th>
+          <th>MC #</th>
+          <th>City / State</th>
+          <th>Status</th>
+          <th>Units</th>
+          <th>Registered</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    <div id="upgradeOverlay" class="upgrade-overlay hidden">
+      <div class="upgrade-card">
+        <span class="lock">🔒</span>
+        <h3>Unlock the full manifest</h3>
+        <p>Free view shows 5 carriers per search. Go Premium to see every record and export to Excel.</p>
+        <div class="price-row">
+          <span class="price">$10<small>/year</small></span>
+          <span class="price">$30<small>/lifetime</small></span>
+        </div>
+        <button class="upgrade-btn" id="switchToPaidBtn">See Premium view (demo)</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Data sourced from FMCSA SAFER &amp; Open Data Program · This is a demo build — see README.md for production setup
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
