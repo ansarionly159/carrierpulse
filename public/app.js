@@ -81,3 +81,28 @@ exportBtn.addEventListener('click', () => {
 });
 
 runSearch();
+const redeemBtn = document.getElementById('redeemBtn');
+const codeInput = document.getElementById('codeInput');
+const redeemMsg = document.getElementById('redeemMsg');
+
+redeemBtn.addEventListener('click', async () => {
+  const code = codeInput.value.trim();
+  if (!code) return;
+  redeemMsg.textContent = 'Checking...';
+  const res = await fetch(`/api/redeem?code=${encodeURIComponent(code)}`);
+  const data = await res.json();
+  if (data.valid) {
+    localStorage.setItem('cp_paid_code', code);
+    redeemMsg.textContent = 'Unlocked! ✅';
+    setTier('paid');
+  } else {
+    redeemMsg.textContent = 'Ye code sahi nahi hai.';
+  }
+});
+
+const savedCode = localStorage.getItem('cp_paid_code');
+if (savedCode) {
+  fetch(`/api/redeem?code=${encodeURIComponent(savedCode)}`)
+    .then(res => res.json())
+    .then(data => { if (data.valid) setTier('paid'); });
+}
