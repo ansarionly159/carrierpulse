@@ -15,15 +15,10 @@
     <span class="brand-mark">DM</span>
     <span class="brand-name">Dotmanifest</span>
   </div>
-  <div class="tier-switch" title="Demo only — real apps use login + payment status">
-    <span>Demo view:</span>
-    <button id="freeBtn" class="tier-btn active">Free</button>
-    <button id="paidBtn" class="tier-btn">Premium</button>
-  </div> 
-  <div class="redeem-box">
-    <input type="text" id="codeInput" placeholder="Premium code hai? Yahan likhein">
-    <button id="redeemBtn">Unlock</button>
-    <span id="redeemMsg"></span>
+  <div class="account-box">
+    <span id="accountStatus">Not logged in</span>
+    <button id="openAuthBtn" class="tier-btn">Login / Sign up</button>
+    <button id="logoutBtn" class="tier-btn hidden">Log out</button>
   </div>
 </header>
 
@@ -88,10 +83,11 @@
         <h3>Unlock the full manifest</h3>
         <p>Free view shows 5 carriers per search. Go Premium to see every record and export to Excel.</p>
         <div class="price-row">
-          <span class="price">$10<small>/year</small></span>
-          <span class="price">$30<small>/lifetime</small></span>
+          <span class="price">$9<small>/mo</small></span>
+          <span class="price">$49<small>/year</small></span>
+          <span class="price">$99<small>/lifetime</small></span>
         </div>
-        <button class="upgrade-btn" id="switchToPaidBtn">See Premium view (demo)</button>
+        <button class="upgrade-btn" id="openAuthBtn2">Log in / Sign up to unlock</button>
       </div>
     </div>
   </div>
@@ -100,6 +96,30 @@
 <footer>
   Data sourced from FMCSA SAFER &amp; Open Data Program · This is a demo build — see README.md for production setup
 </footer>
+
+<div id="authModal" class="auth-modal hidden">
+  <div class="auth-card">
+    <button id="closeAuthBtn" class="close-btn">✕</button>
+    <div class="auth-tabs">
+      <button id="showLoginBtn" class="auth-tab active">Log in</button>
+      <button id="showSignupBtn" class="auth-tab">Sign up</button>
+    </div>
+
+    <form id="loginForm" class="auth-form">
+      <input type="email" id="loginEmail" placeholder="Email" required>
+      <input type="password" id="loginPassword" placeholder="Password" required>
+      <button type="submit" class="search-btn">Log in</button>
+      <p id="loginError" class="auth-error"></p>
+    </form>
+
+    <form id="signupForm" class="auth-form hidden">
+      <input type="email" id="signupEmail" placeholder="Email" required>
+      <input type="password" id="signupPassword" placeholder="Password (6+ characters)" required>
+      <button type="submit" class="search-btn">Create account</button>
+      <p id="signupError" class="auth-error"></p>
+    </form>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
