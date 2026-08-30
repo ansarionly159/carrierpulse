@@ -1,7 +1,9 @@
-let tier = 'free';
+// Dotmanifest frontend — search, account (login/signup), export.
 
-const freeBtn = document.getElementById('freeBtn');
-const paidBtn = document.getElementById('paidBtn');
+let currentTier = 'free';
+let authToken = localStorage.getItem('dm_token') || '';
+let showingSignup = false;
+
 const form = document.getElementById('searchForm');
 const singleField = document.getElementById('singleField');
 const startField = document.getElementById('startField');
@@ -10,17 +12,101 @@ const resultsBody = document.getElementById('resultsBody');
 const resultCount = document.getElementById('resultCount');
 const upgradeOverlay = document.getElementById('upgradeOverlay');
 const exportBtn = document.getElementById('exportBtn');
-const switchToPaidBtn = document.getElementById('switchToPaidBtn');
 
-function setTier(t) {
-  tier = t;
-  freeBtn.classList.toggle('active', t === 'free');
-  paidBtn.classList.toggle('active', t === 'paid');
+const accountStatus = document.getElementById('accountStatus');
+const openAuthBtn = document.getElementById('openAuthBtn');
+const openAuthBtn2 = document.getElementById('openAuthBtn2');
+const logoutBtn = document.getElementById('logoutBtn');
+const authModal = document.getElementById('authModal');
+const closeAuthBtn = document.getElementById('closeAuthBtn');
+const showLoginBtn = document.getElementById('showLoginBtn');
+const showSignupBtn = document.getElementById('showSignupBtn');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const loginError = document.getElementById('loginError');
+const signupError = document.getElementById('signupError');
+
+function openAuth() { authModal.classList.remove('hidden'); }
+function closeAuth() { authModal.classList.add('hidden'); }
+openAuthBtn.addEventListener('click', openAuth);
+if (openAuthBtn2) openAuthBtn2.addEventListener('click', openAuth);
+closeAuthBtn.addEventListener('click', closeAuth);
+
+showLoginBtn.addEventListener('click', () => {
+  showingSignup = false;
+  showLoginBtn.classList.add('active');
+  showSignupBtn.classList.remove('active');
+  loginForm.classList.remove('hidden');
+  signupForm.classList.add('hidden');
+});
+showSignupBtn.addEventListener('click', () => {
+  showingSignup = true;
+  showSignupBtn.classList.add('active');
+  showLoginBtn.classList.remove('active');
+  signupForm.classList.remove('hidden');
+  loginForm.classList.add('hidden');
+});
+
+signupForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  signupError.textContent = '';
+  const email = document.getElementById('signupEmail').value;
+  const password = document.getElementById('signupPassword').value;
+  const res = await fetch('/api/signup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) { signupError.textContent = data.error; return; }
+  authToken = data.token;
+  localStorage.setItem('dm_token', authToken);
+  closeAuth();
+  refreshAccountStatus();
   runSearch();
+});
+
+loginForm.addEventListener('submit', async e => {
+  e.preventDefault();
+  loginError.textContent = '';
+  const email = document.getElementById('loginEmail').value;
+  const password = document.getElementById('loginPassword').value;
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) { loginError.textContent = data.error; return; }
+  authToken = data.token;
+  localStorage.setItem('dm_token', authToken);
+  closeAuth();
+  refreshAccountStatus();
+  runSearch();
+});
+
+logoutBtn.addEventListener('click', () => {
+  authToken = '';
+  localStorage.removeItem('dm_token');
+  refreshAccountStatus();
+  runSearch();
+});
+
+async function refreshAccountStatus() {
+  if (!authToken) {
+    currentTier = 'free';
+    accountStatus.textContent = 'Not logged in';
+    openAuthBtn.classList.remove('hidden');
+    logoutBtn.classList.add('hidden');
+    return;
+  }
+  const res = await fetch(`/api/me?token=${encodeURIComponent(authToken)}`);
+  const data = await res.json();
+  currentTier = data.tier;
+  accountStatus.textContent = currentTier === 'paid' ? 'Premium account' : 'Free account';
+  openAuthBtn.classList.add('hidden');
+  logoutBtn.classList.remove('hidden');
 }
-freeBtn.addEventListener('click', () => setTier('free'));
-paidBtn.addEventListener('click', () => setTier('paid'));
-switchToPaidBtn.addEventListener('click', () => setTier('paid'));
 
 document.querySelectorAll('input[name="mode"]').forEach(radio => {
   radio.addEventListener('change', e => {
@@ -33,7 +119,8 @@ document.querySelectorAll('input[name="mode"]').forEach(radio => {
 
 function currentParams() {
   const mode = document.querySelector('input[name="mode"]:checked').value;
-  const params = new URLSearchParams({ tier });
+  const params = new URLSearchParams();
+  if (authToken) params.set('token', authToken);
   if (mode === 'single') {
     params.set('date', document.getElementById('date').value);
   } else {
@@ -47,6 +134,7 @@ async function runSearch() {
   const params = currentParams();
   const res = await fetch(`/api/carriers?${params.toString()}`);
   const data = await res.json();
+  currentTier = data.tier;
   render(data);
 }
 
@@ -67,7 +155,7 @@ function render(data) {
 
   const hasLocked = data.results.some(r => r.locked);
   upgradeOverlay.classList.toggle('hidden', !hasLocked);
-  exportBtn.disabled = tier !== 'paid';
+  exportBtn.disabled = currentTier !== 'paid';
 }
 
 form.addEventListener('submit', e => {
@@ -80,29 +168,4 @@ exportBtn.addEventListener('click', () => {
   window.location.href = `/api/export?${params.toString()}`;
 });
 
-runSearch();
-const redeemBtn = document.getElementById('redeemBtn');
-const codeInput = document.getElementById('codeInput');
-const redeemMsg = document.getElementById('redeemMsg');
-
-redeemBtn.addEventListener('click', async () => {
-  const code = codeInput.value.trim();
-  if (!code) return;
-  redeemMsg.textContent = 'Checking...';
-  const res = await fetch(`/api/redeem?code=${encodeURIComponent(code)}`);
-  const data = await res.json();
-  if (data.valid) {
-    localStorage.setItem('cp_paid_code', code);
-    redeemMsg.textContent = 'Unlocked! ✅';
-    setTier('paid');
-  } else {
-    redeemMsg.textContent = 'Ye code sahi nahi hai.';
-  }
-});
-
-const savedCode = localStorage.getItem('cp_paid_code');
-if (savedCode) {
-  fetch(`/api/redeem?code=${encodeURIComponent(savedCode)}`)
-    .then(res => res.json())
-    .then(data => { if (data.valid) setTier('paid'); });
-}
+refreshAccountStatus().then(runSearch);
