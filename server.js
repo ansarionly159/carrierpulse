@@ -218,6 +218,49 @@ const server = http.createServer(async (req, res) => {
     return res.end(csv);
   }
 
+  if (pathname === '/api/full-search') {
+    const tier = await tierForToken(query.token);
+    if (tier !== 'paid') {
+      return send(res, 403, { error: 'Full database search sirf Premium users ke liye hai.' });
+    }
+    const { mcStart, mcEnd, city } = query;
+    if (!mcStart && !mcEnd && !city) {
+      return send(res, 400, { error: 'MC range ya city mein se kam az kam ek dena zaroori hai.' });
+    }
+    const clauses = [];
+    if (mcStart) clauses.push(`docket_number >= 'MC${mcStart}'`);
+    if (mcEnd) clauses.push(`docket_number <= 'MC${mcEnd}'`);
+    if (city) clauses.push(`upper(bus_city) = upper('${city.replace(/'/g, "")}')`);
+    const where = encodeURIComponent(clauses.join(' AND '));
+    const censusUrl = `https://data.transportation.gov/resource/az4n-8mr2.json?$where=${where}&$limit=200`;
+    try {
+      const rows = await new Promise((resolve, reject) => {
+        https.get(censusUrl, r => {
+          let data = '';
+          r.on('data', c => (data += c));
+          r.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+          });
+        }).on('error', reject);
+      });
+      const mapped = rows.map(r => ({
+        company_name: r.legal_name || 'Unknown',
+        phone: r.bus_telno || '',
+        dot_number: r.usdot_number || '',
+        mc_number: r.docket_number || '',
+        city: r.bus_city || '',
+        state: r.bus_state_code || '',
+        status: (r.op_auth_status || '').toUpperCase().includes('ACTIVE') ? 'Active' : 'Pending',
+        equipment_count: r.total_power_units || 0,
+        registration_date: '—',
+        locked: false
+      }));
+      return send(res, 200, { count: mapped.length, results: mapped, tier: 'paid' });
+    } catch (e) {
+      return send(res, 500, { error: 'FMCSA se data lene mein masla hua. Dobara try karein.' });
+    }
+  }
+
   return serveStatic(req, res, pathname);
 });
 
