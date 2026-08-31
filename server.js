@@ -227,10 +227,10 @@ const server = http.createServer(async (req, res) => {
     if (!mcStart && !mcEnd && !city) {
       return send(res, 400, { error: 'MC range ya city mein se kam az kam ek dena zaroori hai.' });
     }
-    const clauses = [];
-    if (mcStart) clauses.push(`docket_number >= 'MC${mcStart}'`);
-    if (mcEnd) clauses.push(`docket_number <= 'MC${mcEnd}'`);
-    if (city) clauses.push(`upper(bus_city) = upper('${city.replace(/'/g, "")}')`);
+    const clauses = [`docket1prefix='MC'`];
+    if (mcStart) clauses.push(`docket1 >= ${parseInt(mcStart, 10) || 0}`);
+    if (mcEnd) clauses.push(`docket1 <= ${parseInt(mcEnd, 10) || 999999999}`);
+    if (city) clauses.push(`upper(phy_city) = upper('${city.replace(/'/g, "")}')`);
     const where = encodeURIComponent(clauses.join(' AND '));
     const censusUrl = `https://data.transportation.gov/resource/az4n-8mr2.json?$where=${where}&$limit=200`;
     try {
@@ -243,21 +243,25 @@ const server = http.createServer(async (req, res) => {
           });
         }).on('error', reject);
       });
+      if (!Array.isArray(rows)) {
+        return send(res, 500, { error: 'FMCSA ne error diya: ' + (rows.message || 'unknown') });
+      }
       const mapped = rows.map(r => ({
         company_name: r.legal_name || 'Unknown',
-        phone: r.bus_telno || '',
-        dot_number: r.usdot_number || '',
-        mc_number: r.docket_number || '',
-        city: r.bus_city || '',
-        state: r.bus_state_code || '',
-        status: (r.op_auth_status || '').toUpperCase().includes('ACTIVE') ? 'Active' : 'Pending',
-        equipment_count: r.total_power_units || 0,
-        registration_date: '—',
+        phone: r.phone || '',
+        email: r.email_address || '',
+        dot_number: r.dot_number || '',
+        mc_number: (r.docket1prefix || '') + (r.docket1 || ''),
+        city: r.phy_city || '',
+        state: r.phy_state || '',
+        status: (r.docket1_status_code || '').toUpperCase() === 'A' ? 'Active' : 'Pending',
+        equipment_count: r.power_units || 0,
+        registration_date: r.add_date || '—',
         locked: false
       }));
       return send(res, 200, { count: mapped.length, results: mapped, tier: 'paid' });
     } catch (e) {
-      return send(res, 500, { error: 'FMCSA se data lene mein masla hua. Dobara try karein.' });
+      return send(res, 500, { error: 'FMCSA se data lene mein masla hua: ' + e.message });
     }
   }
 
