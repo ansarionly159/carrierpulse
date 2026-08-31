@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Dotmanifest</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">DM</span>
+    <span class="brand-name">Dotmanifest</span>
+  </div>
+  <a href="/" class="tier-btn">Back to search</a>
+</header>
+<main>
+  <div class="hero"><h1>Privacy Policy</h1></div>
+  <div class="search-panel" style="line-height:1.7; color:var(--text);">
+    <p><strong>What we collect:</strong> When you create an account, we store your email address and an encrypted password. When you search, we do not track your queries beyond what's needed to serve results.</p>
+    <p><strong>Carrier data:</strong> All carrier information shown (company name, phone, DOT/MC number, address) is public data sourced from the FMCSA (Federal Motor Carrier Safety Administration), a U.S. government agency. We do not create or verify this data ourselves.</p>
+    <p><strong>Payment data:</strong> We do not store payment card details. Payments are confirmed manually or through a third-party payment processor, and account access is granted based on that confirmation.</p>
+    <p><strong>Data sharing:</strong> We do not sell or share your account information with third parties.</p>
+    <p><strong>Contact:</strong> For any privacy questions, reach out via the contact details in our footer.</p>
+    <p style="color:var(--muted); font-size:0.85rem;">Last updated: August 2026</p>
+  </div>
+</main>
+<footer>Dotmanifest · Data sourced from FMCSA SAFER &amp; Open Data Program</footer>
+</body>
+</html>
