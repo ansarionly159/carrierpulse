@@ -38,6 +38,7 @@
     <div class="mode-toggle">
       <label><input type="radio" name="mode" value="single" checked> Single date</label>
       <label><input type="radio" name="mode" value="range"> Date range</label>
+      <label><input type="radio" name="mode" value="full"> Full database (MC / City) <span class="premium-tag">Premium</span></label>
     </div>
     <div class="fields">
       <div class="field" id="singleField">
@@ -51,6 +52,18 @@
       <div class="field hidden" id="endField">
         <label for="end">To</label>
         <input type="date" id="end" value="2026-08-20">
+      </div>
+      <div class="field hidden" id="mcStartField">
+        <label for="mcStart">MC # from</label>
+        <input type="text" id="mcStart" placeholder="e.g. 100000">
+      </div>
+      <div class="field hidden" id="mcEndField">
+        <label for="mcEnd">MC # to</label>
+        <input type="text" id="mcEnd" placeholder="e.g. 200000">
+      </div>
+      <div class="field hidden" id="cityField">
+        <label for="cityInput">City</label>
+        <input type="text" id="cityInput" placeholder="e.g. Chicago">
       </div>
       <button type="submit" class="search-btn">Search manifest</button>
     </div>
