@@ -108,19 +108,12 @@ async function refreshAccountStatus() {
   logoutBtn.classList.remove('hidden');
 }
 
-const mcStartField = document.getElementById('mcStartField');
-const mcEndField = document.getElementById('mcEndField');
-const cityField = document.getElementById('cityField');
-
 document.querySelectorAll('input[name="mode"]').forEach(radio => {
   radio.addEventListener('change', e => {
-    const mode = e.target.value;
-    singleField.classList.toggle('hidden', mode !== 'single');
-    startField.classList.toggle('hidden', mode !== 'range');
-    endField.classList.toggle('hidden', mode !== 'range');
-    mcStartField.classList.toggle('hidden', mode !== 'full');
-    mcEndField.classList.toggle('hidden', mode !== 'full');
-    cityField.classList.toggle('hidden', mode !== 'full');
+    const isRange = e.target.value === 'range';
+    singleField.classList.toggle('hidden', isRange);
+    startField.classList.toggle('hidden', !isRange);
+    endField.classList.toggle('hidden', !isRange);
   });
 });
 
@@ -130,32 +123,17 @@ function currentParams() {
   if (authToken) params.set('token', authToken);
   if (mode === 'single') {
     params.set('date', document.getElementById('date').value);
-  } else if (mode === 'range') {
+  } else {
     params.set('start', document.getElementById('start').value);
     params.set('end', document.getElementById('end').value);
-  } else if (mode === 'full') {
-    const mcStart = document.getElementById('mcStart').value.trim();
-    const mcEnd = document.getElementById('mcEnd').value.trim();
-    const city = document.getElementById('cityInput').value.trim();
-    if (mcStart) params.set('mcStart', mcStart);
-    if (mcEnd) params.set('mcEnd', mcEnd);
-    if (city) params.set('city', city);
   }
   return params;
 }
 
 async function runSearch() {
-  const mode = document.querySelector('input[name="mode"]:checked').value;
   const params = currentParams();
-  const endpoint = mode === 'full' ? '/api/full-search' : '/api/carriers';
-  const res = await fetch(`${endpoint}?${params.toString()}`);
+  const res = await fetch(`/api/carriers?${params.toString()}`);
   const data = await res.json();
-  if (!res.ok) {
-    resultCount.textContent = data.error || 'Search failed.';
-    resultsBody.innerHTML = '';
-    upgradeOverlay.classList.toggle('hidden', mode !== 'full');
-    return;
-  }
   currentTier = data.tier;
   render(data);
 }
