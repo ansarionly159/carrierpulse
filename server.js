@@ -1,33 +1,74 @@
-// CarrierPulse / DotManifest backend — plain Node.js, no external packages.
-// Handles: carrier search/export (free vs paid tiers), and a simple
-// email+password account system. Once you mark an account as "paid", it
-// stays paid — the customer can log in from any device, any time.
+// Dotmanifest backend — plain Node.js, no external packages.
+// Handles: carrier search/export (free vs paid tiers), and email+password
+// accounts. User accounts are stored in JSONBin.io (free cloud storage) so
+// they survive Render restarts, instead of a local file.
 
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const https = require('https');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'carriers.json');
-const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 const FREE_LIMIT = 5;
+
+const JSONBIN_ID = process.env.JSONBIN_ID;
+const JSONBIN_KEY = process.env.JSONBIN_KEY;
 
 function loadCarriers() {
   return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
 
-function loadUsers() {
+function jsonbinRequest(method, body) {
+  return new Promise((resolve, reject) => {
+    const data = body ? JSON.stringify(body) : null;
+    const options = {
+      hostname: 'api.jsonbin.io',
+      path: `/v3/b/${JSONBIN_ID}${method === 'GET' ? '/latest' : ''}`,
+      method,
+      headers: {
+        'X-Master-Key': JSONBIN_KEY,
+        'Content-Type': 'application/json',
+        ...(data ? { 'Content-Length': Buffer.byteLength(data) } : {})
+      }
+    };
+    const req = https.request(options, res => {
+      let resData = '';
+      res.on('data', chunk => (resData += chunk));
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(resData));
+        } catch (e) {
+          reject(new Error('JSONBin response parse failed: ' + resData.slice(0, 200)));
+        }
+      });
+    });
+    req.on('error', reject);
+    if (data) req.write(data);
+    req.end();
+  });
+}
+
+async function loadUsers() {
+  if (!JSONBIN_ID || !JSONBIN_KEY) return {};
   try {
-    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf-8'));
-  } catch {
+    const result = await jsonbinRequest('GET');
+    return result.record || {};
+  } catch (e) {
+    console.error('loadUsers failed:', e.message);
     return {};
   }
 }
 
-function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+async function saveUsers(users) {
+  if (!JSONBIN_ID || !JSONBIN_KEY) return;
+  try {
+    await jsonbinRequest('PUT', users);
+  } catch (e) {
+    console.error('saveUsers failed:', e.message);
+  }
 }
 
 function hashPassword(password, salt) {
@@ -93,9 +134,9 @@ function readBody(req) {
   });
 }
 
-function tierForToken(token) {
+async function tierForToken(token) {
   if (!token) return 'free';
-  const users = loadUsers();
+  const users = await loadUsers();
   const entry = Object.values(users).find(u => u.token === token);
   if (!entry) return 'free';
   return entry.paid ? 'paid' : 'free';
@@ -123,13 +164,13 @@ const server = http.createServer(async (req, res) => {
       if (!email || !password || password.length < 6) {
         return send(res, 400, { error: 'Email aur kam se kam 6 character ka password chahiye.' });
       }
-      const users = loadUsers();
+      const users = await loadUsers();
       const key = email.trim().toLowerCase();
       if (users[key]) return send(res, 400, { error: 'Ye email pehle se registered hai.' });
       const salt = crypto.randomBytes(16).toString('hex');
       const token = crypto.randomBytes(24).toString('hex');
       users[key] = { salt, passwordHash: hashPassword(password, salt), paid: false, token };
-      saveUsers(users);
+      await saveUsers(users);
       return send(res, 200, { token, paid: false });
     } catch (e) {
       return send(res, 400, { error: 'Invalid request.' });
@@ -139,7 +180,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/login' && req.method === 'POST') {
     try {
       const { email, password } = await readBody(req);
-      const users = loadUsers();
+      const users = await loadUsers();
       const key = (email || '').trim().toLowerCase();
       const entry = users[key];
       if (!entry) return send(res, 400, { error: 'Account nahi mila.' });
@@ -152,19 +193,19 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/me') {
-    const tier = tierForToken(query.token);
+    const tier = await tierForToken(query.token);
     return send(res, 200, { tier });
   }
 
   if (pathname === '/api/carriers') {
-    const tier = tierForToken(query.token);
+    const tier = await tierForToken(query.token);
     const rows = filterCarriers(query);
     const tiered = applyTier(rows, tier);
     return send(res, 200, { count: rows.length, results: tiered, tier });
   }
 
   if (pathname === '/api/export') {
-    const tier = tierForToken(query.token);
+    const tier = await tierForToken(query.token);
     if (tier !== 'paid') {
       return send(res, 403, { error: 'Export sirf paid users ke liye hai.' });
     }
