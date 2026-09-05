@@ -169,3 +169,40 @@ exportBtn.addEventListener('click', () => {
 });
 
 refreshAccountStatus().then(runSearch);
+
+const lookupBtn = document.getElementById('lookupBtn');
+const lookupResult = document.getElementById('lookupResult');
+lookupBtn.addEventListener('click', async () => {
+  const type = document.getElementById('lookupType').value;
+  const value = document.getElementById('lookupValue').value.trim();
+  if (!value) {
+    lookupResult.innerHTML = '<p class="auth-error">Pehle kuch likhein.</p>';
+    return;
+  }
+  lookupResult.innerHTML = '<p style="color:var(--muted); font-size:0.85rem;">Searching...</p>';
+  const params = new URLSearchParams({ type, value, token: authToken });
+  const res = await fetch(`/api/lookup?${params.toString()}`);
+  const data = await res.json();
+  if (!res.ok) {
+    lookupResult.innerHTML = `<p class="auth-error">${data.error}</p>`;
+    return;
+  }
+  const docParams = new URLSearchParams({
+    name: data.legal_name, dot: data.dot_number, mc: data.mc_number,
+    address: data.address, status: data.status
+  });
+  lookupResult.innerHTML = `
+    <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px; font-size:0.88rem; line-height:1.8;">
+      <strong style="color:var(--blue); font-size:1rem;">${data.legal_name}</strong>${data.dba_name ? ` (DBA: ${data.dba_name})` : ''}<br>
+      <span class="${data.status === 'Active' ? 'status-active' : 'status-pending'}">${data.status}</span> · ${data.carrier_operation}<br>
+      USDOT: ${data.dot_number} &nbsp; MC: ${data.mc_number}<br>
+      Phone: ${data.phone || '—'} &nbsp; Email: ${data.email || '—'}<br>
+      Address: ${data.address || '—'}<br>
+      Power units: ${data.power_units || '—'} &nbsp; MCS-150 date: ${data.mcs150_date || '—'}
+      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+        <a href="/mc-letter.html?${docParams.toString()}" target="_blank" class="export-btn" style="text-decoration:none; display:inline-block;">MC Authority Letter</a>
+        <a href="/w9-template.html?${docParams.toString()}" target="_blank" class="export-btn" style="text-decoration:none; display:inline-block;">W-9 Template</a>
+      </div>
+    </div>
+  `;
+});
