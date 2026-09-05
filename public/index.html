@@ -56,6 +56,30 @@
     </div>
   </form>
 
+  <div class="search-panel">
+    <div class="mode-toggle">
+      <label style="font-weight:600; color:var(--blue);">Look up one carrier <span class="premium-tag">Premium</span></label>
+    </div>
+    <div class="fields">
+      <div class="field">
+        <label for="lookupType">Search by</label>
+        <select id="lookupType" style="background:var(--panel-2); border:1px solid var(--border); color:var(--text); padding:9px 10px; border-radius:5px; font-family:var(--mono); font-size:0.9rem;">
+          <option value="auto">Auto-detect</option>
+          <option value="mc">MC #</option>
+          <option value="dot">USDOT #</option>
+          <option value="email">Email</option>
+          <option value="phone">Phone</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="lookupValue">Value</label>
+        <input type="text" id="lookupValue" placeholder="MC#, DOT#, email, or phone">
+      </div>
+      <button type="button" id="lookupBtn" class="search-btn">Look up</button>
+    </div>
+    <div id="lookupResult" style="margin-top:16px;"></div>
+  </div>
+
   <div class="results-header">
     <h2 id="resultCount">—</h2>
     <button id="exportBtn" class="export-btn">Export CSV / Excel</button>
@@ -115,7 +139,7 @@
     </div>
     <div class="footer-col">
       <h4>Contact</h4>
-      <a href="#">WhatsApp:03486717091</a>
+      <a href="#">WhatsApp: your number here</a>
     </div>
   </div>
   <div class="footer-bottom">
