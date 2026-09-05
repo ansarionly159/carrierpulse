@@ -218,6 +218,81 @@ const server = http.createServer(async (req, res) => {
     return res.end(csv);
   }
 
+  if (pathname === '/api/lookup') {
+    const tier = await tierForToken(query.token);
+    if (tier !== 'paid') {
+      return send(res, 403, { error: 'Carrier lookup sirf Premium users ke liye hai.' });
+    }
+    const raw = (query.value || '').trim();
+    let type = query.type || 'auto';
+    if (!raw) return send(res, 400, { error: 'Pehle kuch likhein.' });
+
+    if (type === 'auto') {
+      if (raw.includes('@')) type = 'email';
+      else {
+        const digits = raw.replace(/\D/g, '');
+        type = digits.length >= 10 ? 'phone' : 'idnumber';
+      }
+    }
+
+    async function queryFmcsa(clause) {
+      const lookupUrl = `https://data.transportation.gov/resource/az4n-8mr2.json?$where=${encodeURIComponent(clause)}&$limit=1`;
+      return new Promise((resolve, reject) => {
+        https.get(lookupUrl, r => {
+          let data = '';
+          r.on('data', c => (data += c));
+          r.on('end', () => {
+            try { resolve(JSON.parse(data)); } catch (e) { reject(e); }
+          });
+        }).on('error', reject);
+      });
+    }
+
+    try {
+      let rows = [];
+      if (type === 'email') {
+        rows = await queryFmcsa(`upper(email_address) = upper('${raw.replace(/'/g, "")}')`);
+      } else if (type === 'phone') {
+        const digits = raw.replace(/\D/g, '');
+        rows = await queryFmcsa(`phone like '%${digits}%'`);
+      } else if (type === 'mc') {
+        const num = parseInt(raw.replace(/\D/g, ''), 10);
+        rows = await queryFmcsa(`docket1prefix='MC' AND docket1=${num}`);
+      } else if (type === 'dot') {
+        const num = parseInt(raw.replace(/\D/g, ''), 10);
+        rows = await queryFmcsa(`dot_number=${num}`);
+      } else if (type === 'idnumber') {
+        const num = parseInt(raw.replace(/\D/g, ''), 10);
+        rows = await queryFmcsa(`dot_number=${num}`);
+        if (!Array.isArray(rows) || rows.length === 0) {
+          rows = await queryFmcsa(`docket1prefix='MC' AND docket1=${num}`);
+        }
+      }
+      if (!Array.isArray(rows)) {
+        return send(res, 500, { error: 'FMCSA ne error diya: ' + (rows.message || 'unknown') });
+      }
+      if (rows.length === 0) {
+        return send(res, 404, { error: 'Koi carrier nahi mila.' });
+      }
+      const r = rows[0];
+      return send(res, 200, {
+        legal_name: r.legal_name || '',
+        dba_name: r.dba_name || '',
+        dot_number: r.dot_number || '',
+        mc_number: (r.docket1prefix || '') + (r.docket1 || ''),
+        status: (r.docket1_status_code || '').toUpperCase() === 'A' ? 'Active' : (r.docket1_status_code || 'Unknown'),
+        carrier_operation: r.carrier_operation || '',
+        mcs150_date: r.mcs150_date || '',
+        phone: r.phone || '',
+        email: r.email_address || '',
+        address: [r.phy_street, r.phy_city, r.phy_state, r.phy_zip].filter(Boolean).join(', '),
+        power_units: r.power_units || ''
+      });
+    } catch (e) {
+      return send(res, 500, { error: 'FMCSA se data lene mein masla hua: ' + e.message });
+    }
+  }
+
   return serveStatic(req, res, pathname);
 });
 
