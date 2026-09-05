@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>W-9 Prep Template</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; color: #1a1a1a; line-height: 1.6; }
+  h1 { font-size: 1.2rem; margin-bottom: 4px; }
+  .sub { color: #666; font-size: 0.85rem; margin-bottom: 24px; }
+  .field { border: 1px solid #999; padding: 10px 14px; margin-bottom: 10px; border-radius: 4px; }
+  .field .label { font-size: 0.72rem; text-transform: uppercase; color: #666; display: block; margin-bottom: 3px; }
+  .field .value { font-size: 0.95rem; }
+  .blank { color: #c00; font-style: italic; }
+  .warning { background: #fff4e5; border: 1px solid #f0b95b; padding: 14px; border-radius: 6px; margin: 20px 0; font-size: 0.85rem; }
+  .print-btn { display: block; margin: 0 auto 30px; padding: 10px 20px; background: #2E86DE; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-size: 0.9rem; }
+  @media print { .print-btn { display: none; } }
+</style>
+</head>
+<body>
+  <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+  <h1>W-9 Preparation Sheet</h1>
+  <div class="sub">Pre-filled with public FMCSA info to send to this carrier — NOT a completed tax form</div>
+
+  <div class="warning">
+    <strong>Important:</strong> This is not an official IRS Form W-9 and cannot be used as one. The carrier must complete and sign the actual IRS Form W-9 themselves, including their Taxpayer Identification Number (TIN/EIN/SSN) — information we do not have and cannot provide. Use this sheet only as a convenience to pre-fill the carrier's known business details when you send them the real form.
+  </div>
+
+  <div class="field"><span class="label">Business Name</span><span class="value" id="name"></span></div>
+  <div class="field"><span class="label">Address</span><span class="value" id="address"></span></div>
+  <div class="field"><span class="label">USDOT / MC Reference</span><span class="value" id="ids"></span></div>
+  <div class="field"><span class="label">Taxpayer ID Number (SSN/EIN)</span><span class="value blank">To be completed by the carrier</span></div>
+  <div class="field"><span class="label">Signature &amp; Date</span><span class="value blank">To be completed by the carrier</span></div>
+
+  <p style="font-size:0.8rem; color:#888; margin-top:24px;">
+    Download the real IRS Form W-9 at irs.gov and send it to the carrier along with this reference sheet.
+  </p>
+
+  <script>
+    const p = new URLSearchParams(window.location.search);
+    document.getElementById('name').textContent = p.get('name') || '—';
+    document.getElementById('address').textContent = p.get('address') || '—';
+    document.getElementById('ids').textContent = `USDOT ${p.get('dot') || '—'} / MC ${p.get('mc') || '—'}`;
+  </script>
+</body>
+</html>
