@@ -275,17 +275,41 @@ const server = http.createServer(async (req, res) => {
         return send(res, 404, { error: 'Koi carrier nahi mila.' });
       }
       const r = rows[0];
+      const cargoMap = {
+        genfreight: 'General Freight', household: 'Household Goods', metalsheet: 'Metal: Sheets/Coils/Rolls',
+        motoveh: 'Motor Vehicles', drivetow: 'Drive/Tow Away', logpole: 'Logs/Poles/Beams/Lumber',
+        bldgmat: 'Building Materials', mobilehome: 'Mobile Homes', machlrg: 'Machinery, Large Objects',
+        produce: 'Fresh Produce', liqgas: 'Liquids/Gases', intermodal: 'Intermodal Containers',
+        passengers: 'Passengers', oilfield: 'Oilfield Equipment', livestock: 'Livestock',
+        utility: 'US Mail', farmsupp: 'Farm Supplies', coalcoke: 'Coal/Coke', meat: 'Meat',
+        garbage: 'Garbage/Refuse', usmail: 'US Mail', chem: 'Chemicals', drybulk: 'Dry Bulk',
+        coldfood: 'Refrigerated Food', beverages: 'Beverages', paperprod: 'Paper Products',
+        construct: 'Construction', waterwell: 'Water Well'
+      };
+      const cargo = Object.keys(cargoMap)
+        .filter(k => (r['crgo_' + k] || '').toUpperCase() === 'Y')
+        .map(k => cargoMap[k]);
+      if ((r.crgo_cargoothr || '').toUpperCase() === 'Y' && r.crgo_cargoothr_desc) {
+        cargo.push(r.crgo_cargoothr_desc);
+      }
       return send(res, 200, {
         legal_name: r.legal_name || '',
         dba_name: r.dba_name || '',
         dot_number: r.dot_number || '',
         mc_number: (r.docket1prefix || '') + (r.docket1 || ''),
         status: (r.docket1_status_code || '').toUpperCase() === 'A' ? 'Active' : (r.docket1_status_code || 'Unknown'),
+        operation_class: r.classdef || '',
         carrier_operation: r.carrier_operation || '',
+        business_org: r.business_org_desc || '—',
         mcs150_date: r.mcs150_date || '',
+        add_date: r.add_date || '',
+        reported_mileage: r.mcs150_mileage ? `${r.mcs150_mileage} mi (${r.mcs150_mileage_year || ''})` : '',
+        cargo,
+        primary_officer: r.company_officer_1 || '',
         phone: r.phone || '',
         email: r.email_address || '',
-        address: [r.phy_street, r.phy_city, r.phy_state, r.phy_zip].filter(Boolean).join(', '),
+        physical_address: [r.phy_street, r.phy_city, r.phy_state, r.phy_zip].filter(Boolean).join(', '),
+        mailing_address: [r.carrier_mailing_street, r.carrier_mailing_city, r.carrier_mailing_state].filter(Boolean).join(', '),
         power_units: r.power_units || ''
       });
     } catch (e) {
