@@ -189,17 +189,54 @@ lookupBtn.addEventListener('click', async () => {
   }
   const docParams = new URLSearchParams({
     name: data.legal_name, dot: data.dot_number, mc: data.mc_number,
-    address: data.address, status: data.status
+    address: data.physical_address, status: data.status
   });
+
+  const field = (label, value) => `
+    <div>
+      <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:3px;">${label}</div>
+      <div style="font-size:0.92rem; color:var(--text); font-weight:500;">${value || '—'}</div>
+    </div>
+  `;
+
+  const cargoTags = (data.cargo || []).map(c =>
+    `<span style="display:inline-block; background:var(--panel); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:0.8rem; margin:0 6px 6px 0;">${c}</span>`
+  ).join('') || '<span style="color:var(--muted); font-size:0.85rem;">Not reported</span>';
+
   lookupResult.innerHTML = `
-    <div style="background:var(--panel-2); border:1px solid var(--border); border-radius:8px; padding:16px; font-size:0.88rem; line-height:1.8;">
-      <strong style="color:var(--blue); font-size:1rem;">${data.legal_name}</strong>${data.dba_name ? ` (DBA: ${data.dba_name})` : ''}<br>
-      <span class="${data.status === 'Active' ? 'status-active' : 'status-pending'}">${data.status}</span> · ${data.carrier_operation}<br>
-      USDOT: ${data.dot_number} &nbsp; MC: ${data.mc_number}<br>
-      Phone: ${data.phone || '—'} &nbsp; Email: ${data.email || '—'}<br>
-      Address: ${data.address || '—'}<br>
-      Power units: ${data.power_units || '—'} &nbsp; MCS-150 date: ${data.mcs150_date || '—'}
-      <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+    <div style="background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:24px; box-shadow:0 2px 10px rgba(236,143,178,0.1);">
+      <div style="margin-bottom:6px;">
+        <strong style="color:var(--blue); font-size:1.15rem;">${data.legal_name}</strong>
+        ${data.dba_name ? `<span style="color:var(--muted); font-size:0.9rem;"> (DBA: ${data.dba_name})</span>` : ''}
+      </div>
+
+      <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--blue); margin:20px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px;">Identifiers &amp; Classification</div>
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:8px;">
+        ${field('USDOT', data.dot_number)}
+        ${field('MC Docket', data.mc_number)}
+        ${field('Status', `<span class="${data.status === 'Active' ? 'status-active' : 'status-pending'}">${data.status}</span>`)}
+        ${field('Operation Class', data.operation_class)}
+        ${field('Carrier Operation', data.carrier_operation)}
+        ${field('Business Org', data.business_org)}
+        ${field('MCS-150 Date', data.mcs150_date)}
+        ${field('Reported Since (FMCSA)', data.add_date)}
+        ${field('Reported Mileage', data.reported_mileage)}
+      </div>
+
+      <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--blue); margin:20px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px;">Cargo</div>
+      <div style="margin-bottom:8px;">${cargoTags}</div>
+
+      <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:var(--blue); margin:20px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px;">Contact Information</div>
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:16px;">
+        ${field('Primary Officer', data.primary_officer)}
+        ${field('Email', data.email)}
+        ${field('Phone', data.phone)}
+        ${field('Physical Address', data.physical_address)}
+        ${field('Mailing Address', data.mailing_address || 'Same as physical')}
+        ${field('Power Units', data.power_units)}
+      </div>
+
+      <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
         <a href="/mc-letter.html?${docParams.toString()}" target="_blank" class="export-btn" style="text-decoration:none; display:inline-block;">MC Authority Letter</a>
         <a href="/w9-template.html?${docParams.toString()}" target="_blank" class="export-btn" style="text-decoration:none; display:inline-block;">W-9 Template</a>
       </div>
