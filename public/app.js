@@ -109,11 +109,6 @@ lookupBtn.addEventListener('click', async () => {
     lookupResult.innerHTML = `<p class="auth-error">${data.error}</p>`;
     return;
   }
-  const docParams = new URLSearchParams({
-    name: data.legal_name, dot: data.dot_number, mc: data.mc_number,
-    address: data.physical_address, status: data.status
-  });
-
   const field = (label, value) => `
     <div>
       <div style="font-size:0.68rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:3px;">${label}</div>
@@ -156,11 +151,6 @@ lookupBtn.addEventListener('click', async () => {
         ${field('Physical Address', data.physical_address)}
         ${field('Mailing Address', data.mailing_address || 'Same as physical')}
         ${field('Power Units', data.power_units)}
-      </div>
-
-      <div style="margin-top:20px; display:flex; gap:10px; flex-wrap:wrap;">
-        <a href="/mc-letter.html?${docParams.toString()}" target="_blank" class="export-btn" style="text-decoration:none; display:inline-block;">MC Authority Letter</a>
-        <a href="/w9-template.html?${docParams.toString()}" target="_blank" class="export-btn" style="text-decoration:none; display:inline-block;">W-9 Template</a>
       </div>
     </div>
   `;
