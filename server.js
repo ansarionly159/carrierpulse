@@ -21,6 +21,7 @@ function loadCarriers() {
   return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
 
+// --- JSONBin helpers (users are stored remotely, not on local disk) ---
 function jsonbinRequest(method, body) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
@@ -52,7 +53,7 @@ function jsonbinRequest(method, body) {
 }
 
 async function loadUsers() {
-  if (!JSONBIN_ID || !JSONBIN_KEY) return {};
+  if (!JSONBIN_ID || !JSONBIN_KEY) return {}; // not configured yet
   try {
     const result = await jsonbinRequest('GET');
     return result.record || {};
@@ -256,16 +257,17 @@ const server = http.createServer(async (req, res) => {
         const digits = raw.replace(/\D/g, '');
         rows = await queryFmcsa(`phone like '%${digits}%'`);
       } else if (type === 'mc') {
-        const num = parseInt(raw.replace(/\D/g, ''), 10);
-        rows = await queryFmcsa(`docket1prefix='MC' AND docket1=${num}`);
+        const num = raw.replace(/\D/g, '');
+        rows = await queryFmcsa(`docket1prefix='MC' AND docket1='${num}'`);
       } else if (type === 'dot') {
         const num = parseInt(raw.replace(/\D/g, ''), 10);
         rows = await queryFmcsa(`dot_number=${num}`);
       } else if (type === 'idnumber') {
-        const num = parseInt(raw.replace(/\D/g, ''), 10);
+        const digits = raw.replace(/\D/g, '');
+        const num = parseInt(digits, 10);
         rows = await queryFmcsa(`dot_number=${num}`);
         if (!Array.isArray(rows) || rows.length === 0) {
-          rows = await queryFmcsa(`docket1prefix='MC' AND docket1=${num}`);
+          rows = await queryFmcsa(`docket1prefix='MC' AND docket1='${digits}'`);
         }
       }
       if (!Array.isArray(rows)) {
