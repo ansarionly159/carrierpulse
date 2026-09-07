@@ -1,17 +1,6 @@
-// Dotmanifest frontend — search, account (login/signup), export.
+// Dotmanifest — Carrier Lookup page (index.html): account login/signup + lookup.
 
-let currentTier = 'free';
 let authToken = localStorage.getItem('dm_token') || '';
-let showingSignup = false;
-
-const form = document.getElementById('searchForm');
-const singleField = document.getElementById('singleField');
-const startField = document.getElementById('startField');
-const endField = document.getElementById('endField');
-const resultsBody = document.getElementById('resultsBody');
-const resultCount = document.getElementById('resultCount');
-const upgradeOverlay = document.getElementById('upgradeOverlay');
-const exportBtn = document.getElementById('exportBtn');
 
 const accountStatus = document.getElementById('accountStatus');
 const openAuthBtn = document.getElementById('openAuthBtn');
@@ -33,14 +22,12 @@ if (openAuthBtn2) openAuthBtn2.addEventListener('click', openAuth);
 closeAuthBtn.addEventListener('click', closeAuth);
 
 showLoginBtn.addEventListener('click', () => {
-  showingSignup = false;
   showLoginBtn.classList.add('active');
   showSignupBtn.classList.remove('active');
   loginForm.classList.remove('hidden');
   signupForm.classList.add('hidden');
 });
 showSignupBtn.addEventListener('click', () => {
-  showingSignup = true;
   showSignupBtn.classList.add('active');
   showLoginBtn.classList.remove('active');
   signupForm.classList.remove('hidden');
@@ -63,7 +50,6 @@ signupForm.addEventListener('submit', async e => {
   localStorage.setItem('dm_token', authToken);
   closeAuth();
   refreshAccountStatus();
-  runSearch();
 });
 
 loginForm.addEventListener('submit', async e => {
@@ -82,19 +68,16 @@ loginForm.addEventListener('submit', async e => {
   localStorage.setItem('dm_token', authToken);
   closeAuth();
   refreshAccountStatus();
-  runSearch();
 });
 
 logoutBtn.addEventListener('click', () => {
   authToken = '';
   localStorage.removeItem('dm_token');
   refreshAccountStatus();
-  runSearch();
 });
 
 async function refreshAccountStatus() {
   if (!authToken) {
-    currentTier = 'free';
     accountStatus.textContent = 'Not logged in';
     openAuthBtn.classList.remove('hidden');
     logoutBtn.classList.add('hidden');
@@ -102,74 +85,13 @@ async function refreshAccountStatus() {
   }
   const res = await fetch(`/api/me?token=${encodeURIComponent(authToken)}`);
   const data = await res.json();
-  currentTier = data.tier;
-  accountStatus.textContent = currentTier === 'paid' ? 'Premium account' : 'Free account';
+  accountStatus.textContent = data.tier === 'paid' ? 'Premium account' : 'Free account';
   openAuthBtn.classList.add('hidden');
   logoutBtn.classList.remove('hidden');
 }
+refreshAccountStatus();
 
-document.querySelectorAll('input[name="mode"]').forEach(radio => {
-  radio.addEventListener('change', e => {
-    const isRange = e.target.value === 'range';
-    singleField.classList.toggle('hidden', isRange);
-    startField.classList.toggle('hidden', !isRange);
-    endField.classList.toggle('hidden', !isRange);
-  });
-});
-
-function currentParams() {
-  const mode = document.querySelector('input[name="mode"]:checked').value;
-  const params = new URLSearchParams();
-  if (authToken) params.set('token', authToken);
-  if (mode === 'single') {
-    params.set('date', document.getElementById('date').value);
-  } else {
-    params.set('start', document.getElementById('start').value);
-    params.set('end', document.getElementById('end').value);
-  }
-  return params;
-}
-
-async function runSearch() {
-  const params = currentParams();
-  const res = await fetch(`/api/carriers?${params.toString()}`);
-  const data = await res.json();
-  currentTier = data.tier;
-  render(data);
-}
-
-function render(data) {
-  resultCount.textContent = `${data.count} carrier${data.count === 1 ? '' : 's'} found`;
-  resultsBody.innerHTML = data.results.map(r => `
-    <tr class="${r.locked ? 'locked' : ''}">
-      <td>${r.company_name}</td>
-      <td>${r.phone}</td>
-      <td>${r.dot_number}</td>
-      <td>${r.mc_number}</td>
-      <td>${r.city}, ${r.state}</td>
-      <td class="${r.status === 'Active' ? 'status-active' : 'status-pending'}">${r.status}</td>
-      <td>${r.equipment_count}</td>
-      <td>${r.registration_date}</td>
-    </tr>
-  `).join('');
-
-  const hasLocked = data.results.some(r => r.locked);
-  upgradeOverlay.classList.toggle('hidden', !hasLocked);
-  exportBtn.disabled = currentTier !== 'paid';
-}
-
-form.addEventListener('submit', e => {
-  e.preventDefault();
-  runSearch();
-});
-
-exportBtn.addEventListener('click', () => {
-  const params = currentParams();
-  window.location.href = `/api/export?${params.toString()}`;
-});
-
-refreshAccountStatus().then(runSearch);
-
+// --- Carrier lookup ---
 const lookupBtn = document.getElementById('lookupBtn');
 const lookupResult = document.getElementById('lookupResult');
 lookupBtn.addEventListener('click', async () => {
