@@ -21,7 +21,6 @@ function loadCarriers() {
   return JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
 }
 
-// --- JSONBin helpers (users are stored remotely, not on local disk) ---
 function jsonbinRequest(method, body) {
   return new Promise((resolve, reject) => {
     const data = body ? JSON.stringify(body) : null;
@@ -53,7 +52,7 @@ function jsonbinRequest(method, body) {
 }
 
 async function loadUsers() {
-  if (!JSONBIN_ID || !JSONBIN_KEY) return {}; // not configured yet
+  if (!JSONBIN_ID || !JSONBIN_KEY) return {};
   try {
     const result = await jsonbinRequest('GET');
     return result.record || {};
@@ -135,12 +134,29 @@ function readBody(req) {
   });
 }
 
+const PLAN_DAYS = { trial: 1, monthly: 30, yearly: 365 }; // lifetime = never expires
+
 async function tierForToken(token) {
   if (!token) return 'free';
   const users = await loadUsers();
-  const entry = Object.values(users).find(u => u.token === token);
-  if (!entry) return 'free';
-  return entry.paid ? 'paid' : 'free';
+  const key = Object.keys(users).find(k => users[k].token === token);
+  if (!key) return 'free';
+  const entry = users[key];
+  if (!entry.paid) return 'free';
+
+  if (!entry.plan || entry.plan === 'lifetime') return 'paid';
+
+  const days = PLAN_DAYS[entry.plan];
+  if (!days || !entry.activatedAt) return 'paid';
+
+  const activated = new Date(entry.activatedAt + 'T00:00:00Z');
+  const expiry = new Date(activated.getTime() + days * 24 * 60 * 60 * 1000);
+  if (new Date() > expiry) {
+    entry.paid = false;
+    await saveUsers(users);
+    return 'free';
+  }
+  return 'paid';
 }
 
 function serveStatic(req, res, pathname) {
